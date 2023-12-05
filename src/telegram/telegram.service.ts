@@ -13,16 +13,16 @@ export class TelegramService extends Telegraf<Context> {
         private readonly recipeGenerator: RecipeGeneratorService,
     ) {
         super(configService.get('TELEGRAM_TOKEN', { infer: true }));
-        this.setupWebhook();
     }
 
-    private setupWebhook() {
+    private async setupWebhook() {
         const url = 'https://icook-chatbot.vercel.app/';
-
-        this.telegram.setWebhook(`${url}`);
+        await this.telegram.setWebhook(url);
     }
+
     @Start()
-    onStart(@Ctx() ctx: Context) {
+    async onStart(@Ctx() ctx: Context) {
+        await this.setupWebhook();
         ctx.replyWithHTML(
             `<b>Привет, ${ctx.from.first_name}! 🍻</b> Я - твой ассистент-повар! 🍳 Давай-ка сделаем что-то веселенькое из того, что у тебя в холодильнике. Просто кинь мне ингредиенты через пробел или запятую. 🥦🍅 Поехали, готовить вместе! 🍽️😜`,
         ).then((r) => r.text);
