@@ -2,7 +2,7 @@ import { Ctx, Message, On, Start, Update } from 'nestjs-telegraf';
 import { Scenes, Telegraf } from 'telegraf';
 import { ConfigService } from '@nestjs/config';
 import { ConfigType } from '../infrastructure/configuration/getConfig';
-import { RecipeGeneratorService } from '../chatgpt/recipe-generator.service';
+import { RecipeGeneratorService } from '../recipe/recipe-generator.service';
 
 type Context = Scenes.SceneContext;
 
@@ -13,8 +13,14 @@ export class TelegramService extends Telegraf<Context> {
         private readonly recipeGenerator: RecipeGeneratorService,
     ) {
         super(configService.get('TELEGRAM_TOKEN', { infer: true }));
+        this.setupWebhook();
     }
 
+    private setupWebhook() {
+        const url = 'https://icook-chatbot.vercel.app/';
+
+        this.telegram.setWebhook(`${url}`);
+    }
     @Start()
     onStart(@Ctx() ctx: Context) {
         ctx.replyWithHTML(
@@ -23,17 +29,21 @@ export class TelegramService extends Telegraf<Context> {
     }
 
     @On('text')
-    async onMessage(@Message('text') message: string, @Ctx() ctx: Context) {
-        const waitMessage = await ctx.reply('Подождите, идет обработка вашего запроса...🕑');
+    async onMessage(@Message() msg: any, @Ctx() ctx: Context) {
+        if (msg && msg.text) {
+            const waitMessage = await ctx.reply('Подождите, идет обработка вашего запроса...🕑');
 
-        const observablePromise = this.recipeGenerator.generateResponse(message);
+            try {
+                const observablePromise = this.recipeGenerator.generateResponse(msg.text);
+                const observable = await observablePromise;
 
-        // Используем оператор 'await' для ожидания разрешения Promise
-        const observable = await observablePromise;
-
-        // Используем оператор 'subscribe' для подписки на Observable
-        observable.subscribe((response: string) => {
-            ctx.telegram.editMessageText(ctx.chat.id, waitMessage.message_id, undefined, response);
-        });
+                observable.subscribe((response: string) => {
+                    ctx.telegram.editMessageText(ctx.chat.id, waitMessage.message_id, undefined, response);
+                });
+            } catch (error) {
+                console.error(error);
+                await ctx.reply('Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз.');
+            }
+        }
     }
 }
