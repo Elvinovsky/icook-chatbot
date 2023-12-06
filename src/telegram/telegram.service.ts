@@ -17,12 +17,17 @@ export class TelegramService extends Telegraf<Context> {
 
     @Start()
     async onStart(@Ctx() ctx: Context) {
-        const botInfo = await ctx.telegram.getMe();
-        console.log('Bot info:', botInfo);
+        console.log('Received /start command');
+        try {
+            const botInfo = await ctx.telegram.getMe();
+            console.log('Bot info:', botInfo);
 
-        ctx.replyWithHTML(
-            `<b>Привет, ${ctx.from.first_name}! 🍻</b> Я - твой ассистент-повар! 🍳 Давай-ка сделаем что-то веселенькое из того, что у тебя в холодильнике. Просто кинь мне ингредиенты через пробел или запятую. 🥦🍅 Поехали, готовить вместе! 🍽️😜`,
-        ).then((r) => r.text);
+            ctx.replyWithHTML(
+                `<b>Привет, ${ctx.from.first_name}! 🍻</b> Я - твой ассистент-повар! 🍳 Давай-ка сделаем что-то веселенькое из того, что у тебя в холодильнике. Просто кинь мне ингредиенты через пробел или запятую. 🥦🍅 Поехали, готовить вместе! 🍽️😜`,
+            ).then((r) => r.text);
+        } catch (error) {
+            console.error('Error processing /start command:', error);
+        }
     }
 
     @On('text')
