@@ -15,14 +15,8 @@ export class TelegramService extends Telegraf<Context> {
         super(configService.get('TELEGRAM_TOKEN', { infer: true }));
     }
 
-    private async setupWebhook() {
-        const url = 'https://icook-chatbot.vercel.app/';
-        await this.telegram.setWebhook(url);
-    }
-
     @Start()
     async onStart(@Ctx() ctx: Context) {
-        await this.setupWebhook();
         ctx.replyWithHTML(
             `<b>Привет, ${ctx.from.first_name}! 🍻</b> Я - твой ассистент-повар! 🍳 Давай-ка сделаем что-то веселенькое из того, что у тебя в холодильнике. Просто кинь мне ингредиенты через пробел или запятую. 🥦🍅 Поехали, готовить вместе! 🍽️😜`,
         ).then((r) => r.text);
